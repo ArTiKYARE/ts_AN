@@ -1,0 +1,52 @@
+# ==========================================
+# Корневой package.json для монорепозитория
+# ==========================================
+{
+  "name": "animestream",
+  "version": "1.0.0",
+  "description": "Веб-сервис для просмотра аниме с каталогом, плеером и админ-панелью",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:admin\"",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "build": "npm run build --workspace=packages/database && npm run build --workspace=apps/api && npm run build --workspace=apps/web && npm run build --workspace=apps/admin",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "start": "concurrently \"npm run start:api\" \"npm run start:web\" \"npm run start:admin\"",
+    "start:api": "npm run start --workspace=apps/api",
+    "start:web": "npm run start --workspace=apps/web",
+    "start:admin": "npm run start --workspace=apps/admin",
+    "prisma:generate": "npx prisma generate --schema=./packages/database/prisma/schema.prisma",
+    "prisma:migrate": "npx prisma migrate deploy --schema=./packages/database/prisma/schema.prisma",
+    "prisma:migrate:dev": "npx prisma migrate dev --schema=./packages/database/prisma/schema.prisma",
+    "prisma:seed": "npx prisma db seed --schema=./packages/database/prisma/schema.prisma",
+    "prisma:studio": "npx prisma studio --schema=./packages/database/prisma/schema.prisma",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "test": "npm run test --workspaces",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:rebuild": "docker-compose up -d --build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "author": "AnimeStream Team",
+  "license": "MIT"
+}

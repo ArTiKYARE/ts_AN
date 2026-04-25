@@ -46,6 +46,11 @@ enum FavoriteStatus {
   PAUSED
 }
 
+enum CommentVoteType {
+  LIKE
+  DISLIKE
+}
+
 // ============================================
 // MODELS
 // ============================================
@@ -67,7 +72,10 @@ model User {
   comments      Comment[]
   favorites     Favorite[]
   watchHistory  WatchHistory[]
-  commentLikes  CommentLike[]
+  commentVotes  CommentVote[]
+
+  // ✅ FIX #1-2: Убраны implicit many-to-many с references
+  // Для лайков/дизлайков используйте модель CommentVote (явная связь)
 
   @@index([email])
   @@index([username])
@@ -131,7 +139,10 @@ model Anime {
   genres         Genre[]
   studios        Studio[]
   episodes       Episode[]
-  comments       Comment[]
+  
+  // ✅ FIX #4: Имя связи для комментариев к аниме
+  comments       Comment[]    @relation("AnimeComments")
+  
   favorites      Favorite[]
   watchHistory   WatchHistory[]
   synonyms       Synonym[]
@@ -191,8 +202,14 @@ model Episode {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  videoSources VideoSource[]
-  watchHistory WatchHistory[]
+  videoSources    VideoSource[]
+  watchHistory    WatchHistory[]
+  
+  // ✅ FIX #3: Обратная связь для EpisodeDubbing
+  episodeDubbings EpisodeDubbing[]
+  
+  // ✅ FIX #5: Имя связи для комментариев к эпизоду
+  comments        Comment[] @relation("EpisodeComments")
 
   @@unique([animeId, number])
   @@index([animeId])
@@ -214,7 +231,7 @@ model VideoSource {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
-  dubs      Dub[]
+  dubs Dub[]
 
   @@index([episodeId])
   @@map("video_sources")
@@ -291,15 +308,21 @@ model Comment {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   animeId   String
-  anime     Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  
+  // ✅ FIX #4: Имя связи "AnimeComments" на обеих сторонах
+  anime     Anime     @relation("AnimeComments", fields: [animeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  
   episodeId String?
-  episode   Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  // ✅ FIX #5: Имя связи "EpisodeComments" на обеих сторонах
+  episode   Episode?  @relation("EpisodeComments", fields: [episodeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   
   content   String    @db.Text
   
+  // Self-relation: только сторона с FK (parent) имеет fields/references
   parentId  String?
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  replies   Comment[] @relation("CommentReplies", references: [parentId])
+  // ✅ FIX: replies НЕ должен иметь references — только имя связи
+  replies   Comment[] @relation("CommentReplies")
   
   likes     Int       @default(0)
   dislikes  Int       @default(0)
@@ -311,7 +334,8 @@ model Comment {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  likesRelations CommentLike[] @relation(references: [commentId])
+  // ✅ FIX #1-2: Убраны implicit many-to-many, используем CommentVote
+  votes CommentVote[]
 
   @@index([userId])
   @@index([animeId])
@@ -321,19 +345,49 @@ model Comment {
   @@map("comments")
 }
 
-model CommentLike {
-  id        String   @id @default(uuid())
+model CommentVote {
+  id        String          @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   commentId String
-  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  comment   Comment         @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
-  type      String   // "like" или "dislike"
-  createdAt DateTime @default(now())
+  type      CommentVoteType
+  createdAt DateTime        @default(now())
 
   @@unique([userId, commentId])
   @@index([commentId])
-  @@map("comment_likes")
+  @@map("comment_votes")
+}
+
+model EpisodeDubbing {
+  id        String   @id @default(uuid())
+  episodeId String
+  // ✅ FIX #3: Связь с обратной стороной Episode.episodeDubbings
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  
+  dubbingId String
+  dubbing   Dubbing  @relation(fields: [dubbingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  
+  url       String?
+  priority  Int      @default(0)
+  isActive  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([episodeId, dubbingId])
+  @@index([episodeId])
+  @@map("episode_dubbings")
+}
+
+model Dubbing {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  code        String  @unique
+  episodeDubbings EpisodeDubbing[]
+  
+  @@map("dubbings")
 }
 
 model AdminLog {

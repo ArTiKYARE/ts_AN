@@ -1,13 +1,118 @@
 ```
-# Prisma schema migration files
+# Prisma schema files
 prisma/migrations/
+prisma/schema.prisma.bak
 
-# Generated Prisma client
-generated/
-prisma/generated/
+# Dependencies
+node_modules/
 
 # Environment variables
 .env
 .env.local
 .env.*
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build outputs
+dist/
+build/
+target/
+out/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/modules/
+*.sublime-workspace
+
+# Node specific
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Go specific
+*.out
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Java specific
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# C/C++ specific
+*.o
+*.a
+*.obj
+*.lib
+*.map
+*.ilk
+*.pdb
+*.gch
+*.ii
+*.vi
+*.sii
+*.pch
+*.xpi
+*.whl
+
+# Compression files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```

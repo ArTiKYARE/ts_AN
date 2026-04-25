@@ -282,8 +282,6 @@ model Comment {
   episode    Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull)
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Лайки/дизлайки
-  commentLikes CommentLike[]
 
   @@index([animeId])
   @@index([userId])

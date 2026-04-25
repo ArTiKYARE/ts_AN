@@ -1,6 +1,4 @@
-# ======================================
-# Prisma Schema для AnimeStream
-# ======================================
+// Prisma Schema для AnimeStream
 
 generator client {
   provider = "prisma-client-js"
@@ -11,9 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ======================================
 // Пользователи и авторизация
-// ======================================
 
 model User {
   id        String   @id @default(uuid())
@@ -46,9 +42,7 @@ enum Role {
   ADMIN
 }
 
-// ======================================
 // Аниме тайтлы
-// ======================================
 
 model Anime {
   id          String   @id @default(uuid())
@@ -118,9 +112,7 @@ enum SourceType {
   OTHER
 }
 
-// ======================================
 // Эпизоды аниме
-// ======================================
 
 model Episode {
   id          String   @id @default(uuid())
@@ -146,9 +138,7 @@ model Episode {
   @@map("episodes")
 }
 
-// ======================================
 // Источники видео (плееры)
-// ======================================
 
 model VideoSource {
   id        String   @id @default(uuid())
@@ -176,9 +166,7 @@ enum VideoType {
   DASH
 }
 
-// ======================================
 // Озвучки (дабы)
-// ======================================
 
 model Dubbing {
   id        String   @id @default(uuid())
@@ -213,9 +201,7 @@ model EpisodeDubbing {
   @@map("episode_dubbings")
 }
 
-// ======================================
 // Избранное
-// ======================================
 
 model Favorite {
   id        String   @id @default(uuid())
@@ -246,9 +232,7 @@ enum FavoriteStatus {
   DROPPED
 }
 
-// ======================================
 // История просмотров
-// ======================================
 
 model WatchHistory {
   id           String   @id @default(uuid())
@@ -272,9 +256,7 @@ model WatchHistory {
   @@map("watch_history")
 }
 
-// ======================================
 // Комментарии
-// ======================================
 
 model Comment {
   id        String   @id @default(uuid())
@@ -305,9 +287,7 @@ model Comment {
   @@map("comments")
 }
 
-// ======================================
 // Отзывы/Рецензии
-// ======================================
 
 model Review {
   id        String   @id @default(uuid())
@@ -333,9 +313,7 @@ model Review {
   @@map("reviews")
 }
 
-// ======================================
 // Связанные аниме
-// ======================================
 
 model RelatedAnime {
   id        String   @id @default(uuid())
@@ -366,9 +344,7 @@ enum RelationType {
   OTHER
 }
 
-// ======================================
 // Настройки приложения
-// ======================================
 
 model AppSettings {
   id        String   @id @default(uuid())

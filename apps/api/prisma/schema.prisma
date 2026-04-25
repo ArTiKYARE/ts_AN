@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// enum для ролей пользователей
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+// enum для статуса аниме
+enum AnimeStatus {
+  ONGOING
+  COMPLETED
+  ANNOUNCED
+  CANCELLED
+}
+
+// enum для типа источника видео
+enum SourceType {
+  IFAME
+  HLS
+  DIRECT
+  UPLOAD
+}
+
+// Модель пользователя
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  avatar    String?
+  role      Role     @default(USER)
+  isBlocked Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Связи
+  comments    Comment[]
+  favorites   Favorite[]
+  watchHistory WatchHistory[]
+  likes       CommentLike[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// Модель аниме
+model Anime {
+  id          String     @id @default(uuid())
+  title       String
+  titleNative String?
+  synonyms    String[]
+  description String?
+  poster      String?
+  banner      String?
+  year        Int?
+  status      AnimeStatus @default(ONGOING)
+  rating      Float?
+  genres      String[]
+  studios     String[]
+  episodes    Episode[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Связи
+  favorites   Favorite[]
+  comments    Comment[]
+  watchHistory WatchHistory[]
+
+  @@index([title])
+  @@index([status])
+  @@index([year])
+  @@index([rating])
+}
+
+// Модель эпизода
+model Episode {
+  id        String   @id @default(uuid())
+  number    Int
+  title     String?
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  sources   VideoSource[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([animeId, number])
+  @@index([animeId])
+}
+
+// Модель источника видео
+model VideoSource {
+  id        String     @id @default(uuid())
+  episodeId String
+  episode   Episode    @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  name      String     // Название плеера/источника
+  type      SourceType
+  url       String
+  dubs      Dub[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([episodeId])
+}
+
+// Модель озвучки
+model Dub {
+  id        String   @id @default(uuid())
+  sourceId  String
+  source    VideoSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  lang      String   // Код языка (ru, en, jp)
+  name      String   // Название студии озвучки
+  url       String   // URL для конкретной дорожки (если отличается)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceId])
+}
+
+// Избранное
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, animeId])
+  @@index([userId])
+  @@index([animeId])
+}
+
+// История просмотров
+model WatchHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  episodeId String?
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+  progress  Int      @default(0) // Процент просмотра
+  lastWatched DateTime @default(now())
+
+  @@unique([userId, animeId])
+  @@index([userId])
+  @@index([animeId])
+}
+
+// Комментарии
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  likes     Int      @default(0)
+  dislikes  Int      @default(0)
+  isDeleted Boolean  @default(false)
+  isHidden  Boolean  @default(false) // Скрыто модератором
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([animeId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+// Лайки/дизлайки комментариев
+model CommentLike {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  type      String   // "like" или "dislike"
+  createdAt DateTime @default(now())
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+}
+
+// Настройки сайта
+model SiteSettings {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}

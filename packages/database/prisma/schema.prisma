@@ -54,7 +54,7 @@ model Anime {
   bannerImage String?
   trailerUrl  String?
   year        Int?
-  status      AnimeStatus @default.UNKNOWN
+  status      AnimeStatus
   season      Season?
   episodes    Int      @default(0)
   duration    Int?     // длительность эпизода в минутах

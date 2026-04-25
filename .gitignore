@@ -1,77 +1,33 @@
 ```
+# Docker related
+.dockerignore
+
 # Dependencies
 node_modules/
-**/node_modules/
-
-# Build outputs
+venv/
+.venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
 dist/
 build/
 target/
-**/dist/
-**/build/
-**/target/
+.gradle/
 
-# TypeScript/JavaScript
-*.js.map
-*.tsbuildinfo
-.nyc_output/
-coverage/
-
-# Environment variables
-.env
-.env.local
-.env.*
-!.env.example
-
-# Docker
-Dockerfile
-docker-compose.yml
-
-# Database
-prisma/migrations/
-*.db
-*.db-journal
-
-# IDE
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Logs and temp files
+*.log
 *.tmp
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Python (if any Python files exist in the project)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-.coverage
-htmlcov/
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/
-!.git/
-
-# Java (if any Java files exist in the project)
-*.class
-*.jar
-*.war
-*.ear
-*.nar
-*.hprof
-.hprof
+# OS generated files
 .DS_Store
 Thumbs.db
 ```

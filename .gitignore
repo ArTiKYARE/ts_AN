@@ -1,1 +1,56 @@
-Nothing should be ignored in this case, as only a README.md file was modified and no build artifacts, dependencies, or temporary files were detected.
+```
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+target/
+coverage/
+htmlcov/
+
+# TypeScript/NestJS
+*.tsbuildinfo
+.next/
+.nuxt/
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+__pycache__/
+*.pyc
+*.pyo
+.Python
+pip-log.txt
+.tox/
+.coverage
+.pytest_cache/
+.mypy_cache/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+```

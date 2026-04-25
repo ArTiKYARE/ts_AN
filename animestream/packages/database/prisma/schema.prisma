@@ -1,0 +1,423 @@
+// Схема базы данных для AnimeStream
+// Используется Prisma ORM для работы с PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ПОЛЬЗОВАТЕЛИ И АВТОРИЗАЦИЯ
+// ============================================
+
+/// Роль пользователя в системе
+enum Role {
+  USER      // Обычный пользователь
+  MODERATOR // Модератор контента и комментариев
+  ADMIN     // Полный доступ ко всем функциям
+}
+
+/// Статус пользователя
+enum UserStatus {
+  ACTIVE    // Активен
+  BANNED    // Заблокирован
+  PENDING   // Ожидает подтверждения (если включено)
+}
+
+/// Таблица пользователей
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Хэш пароля
+  username  String   @unique
+  avatar    String?  // URL аватара
+  role      Role     @default(USER)
+  status    UserStatus @default(ACTIVE)
+  
+  // Профиль
+  bio       String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Связи
+  comments      Comment[]
+  favorites     Favorite[]
+  watchHistory  WatchHistory[]
+  settings      UserSettings?
+  refreshTokens RefreshToken[]
+  
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+/// Настройки пользователя
+model UserSettings {
+  id              String @id @default(uuid())
+  userId          String @unique
+  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Настройки плеера
+  defaultPlayer   String @default("default") // Плеер по умолчанию
+  defaultDub      String @default("russian") // Озвучка по умолчанию
+  autoPlay        Boolean @default(true)     // Автовоспроизведение следующего эпизода
+  
+  // Настройки интерфейса
+  theme           String @default("dark")    // dark/light
+  language        String @default("ru")      // Язык интерфейса
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("user_settings")
+}
+
+/// Токены обновления сессии
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// АНИМЕ И КОНТЕНТ
+// ============================================
+
+/// Статус аниме
+enum AnimeStatus {
+  ONGOING    // Онгоинг, выходит
+  COMPLETED  // Завершён
+  ANNOUNCED  // Анонсирован
+  HIATUS     // На паузе
+}
+
+/// Тип источника видео
+enum SourceType {
+  IFRAME   // Встраиваемый iframe
+  HLS      // HLS поток
+  DIRECT   // Прямая ссылка на файл
+  CUSTOM   // Кастомный плеер
+}
+
+/// Основная таблица аниме
+model Anime {
+  id          String   @id @default(uuid())
+  title       String   // Основное название
+  slug        String   @unique // URL--friendly название
+  description String?  @db.Text
+  poster      String?  // URL постера
+  banner      String?  // URL баннера
+  trailer     String?  // URL трейлера
+  
+  // Метаданные
+  year        Int?
+  status      AnimeStatus @default(ONGOING)
+  rating      Float?   @default(0) // Средний рейтинг 0-10
+  votes       Int      @default(0) // Количество голосов
+  
+  // Внешние идентификаторы
+  externalId  String?  // ID во внешнем API (Anilist, Kitsu и т.д.)
+  source      String?  // Название источника данных
+  
+  // SEO
+  seoTitle    String?
+  seoDescription String? @db.Text
+  seoKeywords String?  @db.Text
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  genres      Genre[]
+  studios     Studio[]
+  episodes    Episode[]
+  comments    Comment[]
+  favorites   Favorite[]
+  watchHistory WatchHistory[]
+  synonyms    Synonym[]
+  relatedAnime RelatedAnime[] @relation("relatedFrom")
+  relatedTo   RelatedAnime[] @relation("relatedTo")
+  
+  @@index([slug])
+  @@index([title])
+  @@index([year])
+  @@index([status])
+  @@index([rating])
+  @@map("anime")
+}
+
+/// Синонимы аниме (альтернативные названия)
+model Synonym {
+  id      String @id @default(uuid())
+  title   String
+  animeId String
+  anime   Anime  @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  
+  @@index([title])
+  @@map("synonyms")
+}
+
+/// Жанры
+model Genre {
+  id          String @id @default(uuid())
+  name        String @unique
+  slug        String @unique
+  description String? @db.Text
+  
+  anime       Anime[]
+  
+  @@map("genres")
+}
+
+/// Студии
+model Studio {
+  id          String @id @default(uuid())
+  name        String @unique
+  slug        String @unique
+  description String? @db.Text
+  
+  anime       Anime[]
+  
+  @@map("studios")
+}
+
+/// Эпизоды аниме
+model Episode {
+  id          String   @id @default(uuid())
+  animeId     String
+  anime       Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  
+  number      Int      // Номер эпизода
+  title       String?  // Название эпизода
+  description String?  @db.Text
+  duration    Int?     // Длительность в секундах
+  airDate     DateTime? // Дата выхода
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  videoSources VideoSource[]
+  watchHistory WatchHistory[]
+  
+  @@unique([animeId, number])
+  @@index([animeId])
+  @@index([number])
+  @@map("episodes")
+}
+
+/// Источники видео для эпизода
+model VideoSource {
+  id          String    @id @default(uuid())
+  episodeId   String
+  episode     Episode   @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  
+  name        String    // Название источника (например, "Kodik", "Alloha", "Sibnet")
+  type        SourceType @default(IFRAME)
+  url         String    // URL источника
+  
+  priority    Int       @default(0) // Приоритет отображения (чем выше, тем выше в списке)
+  isActive    Boolean   @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи с озвучками
+  dubs        Dub[]
+  
+  @@index([episodeId])
+  @@index([name])
+  @@map("video_sources")
+}
+
+/// Озвучки для источника видео
+model Dub {
+  id          String    @id @default(uuid())
+  sourceId    String
+  source      VideoSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  
+  name        String    // Название озвучки (например, "SHIZA Project", "AniLibria")
+  lang        String    @default("ru") // Язык (ru, en, ja-original)
+  url         String?   // URL если отличается от источника
+  isDefault   Boolean   @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([sourceId])
+  @@map("dubs")
+}
+
+/// Связанные аниме (сиквелы, приквелы, спин-оффы)
+model RelatedAnime {
+  id        String @id @default(uuid())
+  fromId    String
+  from      Anime  @relation("relatedFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId      String
+  to        Anime  @relation("relatedTo", fields: [toId], references: [id], onDelete: Cascade)
+  
+  relationType String // sequel, prequel, spinoff, alternative, summary, other
+  
+  @@unique([fromId, toId])
+  @@index([fromId])
+  @@index([toId])
+  @@map("related_anime")
+}
+
+// ============================================
+// ПОЛЬЗОВАТЕЛЬСКИЙ КОНТЕНТ
+// ============================================
+
+/// Избранное
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, animeId])
+  @@index([userId])
+  @@index([animeId])
+  @@map("favorites")
+}
+
+/// История просмотров
+model WatchHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  episodeId String?
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+  
+  progress  Int      @default(0) // Прогресс просмотра в секундах
+  completed Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, animeId, episodeId])
+  @@index([userId])
+  @@index([animeId])
+  @@map("watch_history")
+}
+
+/// Комментарии
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  episodeId String?  // Опционально: комментарий к конкретному эпизоду
+  
+  content   String   @db.Text
+  parentId  String?  // Для вложенных комментариев
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  
+  likes     Int      @default(0)
+  dislikes  Int      @default(0)
+  
+  isDeleted Boolean  @default(false) // Мягкое удаление
+  isHidden  Boolean  @default(false) // Скрыто модератором
+  isEdited  Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Связи с лайками
+  commentLikes CommentLike[]
+  
+  @@index([userId])
+  @@index([animeId])
+  @@index([episodeId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+/// Лайки/дизлайки комментариев
+model CommentLike {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  type      String   // like/dislike
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, commentId])
+  @@index([commentId])
+  @@map("comment_likes")
+}
+
+// ============================================
+// АДМИН-ПАНЕЛЬ И ЛОГИРОВАНИЕ
+// ============================================
+
+/// Логи действий администраторов
+model AdminLog {
+  id        String   @id @default(uuid())
+  adminId   String?  // Кто выполнил действие
+  action    String   // Тип действия
+  entity    String   // Сущность (user, anime, comment и т.д.)
+  entityId  String?  // ID сущности
+  oldValue  String?  @db.Text // Старое значение (JSON)
+  newValue  String?  @db.Text // Новое значение (JSON)
+  ipAddress String?  // IP адрес
+  userAgent String?  // User agent
+  
+  createdAt DateTime @default(now())
+  
+  @@index([adminId])
+  @@index([action])
+  @@index([entity])
+  @@map("admin_logs")
+}
+
+/// Настройки системы
+model SystemSettings {
+  id        String @id @default(uuid())
+  key       String @unique
+  value     String @db.Text
+  type      String @default("string") // string, number, boolean, json
+  category  String @default("general") // general, player, api, cache
+  
+  description String?
+  updatedAt DateTime @updatedAt
+  
+  @@index([category])
+  @@map("system_settings")
+}
+
+/// Кэш внешних API
+model ApiCache {
+  id        String   @id @default(uuid())
+  key       String   @unique // Уникальный ключ запроса
+  endpoint  String   // Название эндпоинта
+  data      String   @db.Text // JSON данные
+  expiresAt DateTime // Когда истекает кэш
+  
+  createdAt DateTime @default(now())
+  
+  @@index([endpoint])
+  @@index([expiresAt])
+  @@map("api_cache")
+}

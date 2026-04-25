@@ -1,18 +1,18 @@
 ```
+# Prisma
+prisma/migrations/
+prisma/schema.db
+*.db-journal
+
 # Dependencies
 node_modules/
-
-# Build outputs
-dist/
-build/
-target/
 
 # Environment variables
 .env
 .env.local
-*.env.*
+.env.*
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.swp
@@ -21,38 +21,9 @@ target/
 # Logs
 *.log
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Prisma
-prisma/migrations/
-*.db
-*.db-journal
-
-# Temporary files
-*.tmp
-*.temp
-.DS_Store
-Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-*.coverage
-
-# Cache
-.cache/
-.mypy_cache/
-.pytest_cache/
-.gradle/
+# Build outputs
+dist/
+build/
+target/
+out/
 ```

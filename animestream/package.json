@@ -1,0 +1,38 @@
+{
+  "name": "animestream",
+  "version": "1.0.0",
+  "description": "Веб-сервис для просмотра аниме",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:admin\"",
+    "dev:api": "npm run dev --workspace=@animestream/api",
+    "dev:web": "npm run dev --workspace=@animestream/web",
+    "dev:admin": "npm run dev --workspace=@animestream/admin",
+    "build": "npm run build --workspaces",
+    "build:api": "npm run build --workspace=@animestream/api",
+    "build:web": "npm run build --workspace=@animestream/web",
+    "build:admin": "npm run build --workspace=@animestream/admin",
+    "db:migrate": "npm run db:migrate --workspace=@animestream/database",
+    "db:generate": "npm run db:generate --workspace=@animestream/database",
+    "db:seed": "npm run db:seed --workspace=@animestream/database",
+    "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f docker/docker-compose.yml down",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

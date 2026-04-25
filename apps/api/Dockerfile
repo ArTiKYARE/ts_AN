@@ -45,8 +45,8 @@ COPY package*.json ./
 COPY apps/api/package*.json ./apps/api/
 COPY packages/database/package*.json ./packages/database/
 
-# Установка только production зависимостей
-RUN npm install --only=production --ignore-scripts
+# Установка production зависимостей
+RUN npm install --omit=dev --ignore-scripts
 
 # Копирование собранного приложения и Prisma клиента
 COPY --from=builder /app/apps/api/dist ./apps/api/dist

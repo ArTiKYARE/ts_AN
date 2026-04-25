@@ -1,33 +1,43 @@
 ```
-# Docker related
-.dockerignore
-
 # Dependencies
 node_modules/
-venv/
-.venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
+.pnpm-store/
+.npm/
+
+# Build outputs
 dist/
 build/
-target/
-.gradle/
+.next/
+out/
 
-# Editors
-.vscode/
-.idea/
+# TypeScript
+*.tsbuildinfo
+*.js.map
 
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
+!.env.example
 
-# Logs and temp files
+# Logs
 *.log
-*.tmp
 
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Prisma
+prisma/migrations/
+prisma/schema.prisma.bak
+
+# Coverage
+coverage/
+.nyc_output/
 ```

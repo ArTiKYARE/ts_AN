@@ -7,7 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums
+// ============================================
+// ENUMS
+// ============================================
+
 enum Role {
   USER
   MODERATOR
@@ -42,7 +45,10 @@ enum FavoriteStatus {
   PAUSED
 }
 
-// Models
+// ============================================
+// MODELS
+// ============================================
+
 model User {
   id            String       @id @default(uuid())
   email         String       @unique
@@ -55,7 +61,8 @@ model User {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
-  settings      UserSettings?
+  // Связи с явными именами
+  settings      UserSettings? @relation(fields: [id], references: [userId])
   refreshTokens RefreshToken[]
   comments      Comment[]
   favorites     Favorite[]
@@ -70,7 +77,7 @@ model User {
 model UserSettings {
   id            String   @id @default(uuid())
   userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
   defaultPlayer String   @default("default")
   defaultDub    String   @default("russian")
@@ -87,7 +94,7 @@ model UserSettings {
 model RefreshToken {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -121,6 +128,7 @@ model Anime {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  // Связи
   genres         Genre[]
   studios        Studio[]
   episodes       Episode[]
@@ -129,8 +137,8 @@ model Anime {
   watchHistory   WatchHistory[]
   synonyms       Synonym[]
   
-  relatedFrom    RelatedAnime[] @relation("AnimeRelatedFrom")
-  relatedTo      RelatedAnime[] @relation("AnimeRelatedTo")
+  relatedFrom    RelatedAnime[] @relation("RelatedFrom")
+  relatedTo      RelatedAnime[] @relation("RelatedTo")
 
   @@index([slug])
   @@index([title])
@@ -144,7 +152,7 @@ model Synonym {
   id      String @id @default(uuid())
   title   String
   animeId String
-  anime   Anime  @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  anime   Anime  @relation(fields: [animeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([title])
   @@map("synonyms")
@@ -173,7 +181,7 @@ model Studio {
 model Episode {
   id          String   @id @default(uuid())
   animeId     String
-  anime       Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  anime       Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
   number      Int
   title       String?
@@ -195,7 +203,7 @@ model Episode {
 model VideoSource {
   id        String      @id @default(uuid())
   episodeId String
-  episode   Episode     @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episode   Episode     @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
   name      String
   type      SourceType  @default(IFRAME)
@@ -216,7 +224,7 @@ model VideoSource {
 model Dub {
   id        String      @id @default(uuid())
   sourceId  String
-  source    VideoSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  source    VideoSource @relation(fields: [sourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
   name      String
   lang      String      @default("ru")
@@ -232,9 +240,9 @@ model Dub {
 model RelatedAnime {
   id           String @id @default(uuid())
   fromId       String
-  from         Anime  @relation("AnimeRelatedFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  from         Anime  @relation("RelatedFrom", fields: [fromId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   toId         String
-  to           Anime  @relation("AnimeRelatedTo", fields: [toId], references: [id], onDelete: Cascade)
+  to           Anime  @relation("RelatedTo", fields: [toId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   relationType String
 
   @@unique([fromId, toId])
@@ -246,9 +254,9 @@ model RelatedAnime {
 model Favorite {
   id        String        @id @default(uuid())
   userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   animeId   String
-  anime     Anime         @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  anime     Anime         @relation(fields: [animeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   status    FavoriteStatus @default(PLANNING)
   createdAt DateTime      @default(now())
 
@@ -261,11 +269,12 @@ model Favorite {
 model WatchHistory {
   id        String    @id @default(uuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   animeId   String
-  anime     Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  anime     Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   episodeId String?
-  episode   Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+  // Исправленная связь с эпизодом
+  episode   Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   
   progress  Int       @default(0)
   completed Boolean   @default(false)
@@ -282,16 +291,18 @@ model WatchHistory {
 model Comment {
   id        String    @id @default(uuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   animeId   String
-  anime     Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  anime     Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   episodeId String?
-  episode   Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+  // Опциональная связь с эпизодом
+  episode   Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   
   content   String    @db.Text
   
+  // Самоссылающаяся связь (ответы)
   parentId  String?
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   replies   Comment[] @relation("CommentReplies")
   
   likes     Int       @default(0)
@@ -317,11 +328,11 @@ model Comment {
 model CommentLike {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   commentId String
-  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
-  type      String
+  type      String   // "like" или "dislike"
   createdAt DateTime @default(now())
 
   @@unique([userId, commentId])

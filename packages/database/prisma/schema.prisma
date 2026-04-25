@@ -63,7 +63,7 @@ model Anime {
   genres      String[]
   tags        String[]
   studios     String[]
-  source      SourceType @default("UNKNOWN")
+  sourceType  SourceType?
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -8,13 +8,18 @@ WORKDIR /app
 # Установка зависимостей для сборки
 RUN apk add --no-cache python3 make g++
 
-# Копирование корневых файлов
+# Копирование всех package.json файлов
 COPY package*.json ./
 COPY apps/api/package*.json ./apps/api/
+COPY apps/web/package*.json ./apps/web/
+COPY apps/admin/package*.json ./apps/admin/
 COPY packages/database/package*.json ./packages/database/
 
-# Установка зависимостей
-RUN npm ci
+# Генерация package-lock.json если его нет
+RUN if [ ! -f package-lock.json ]; then npm install --package-lock-only; fi
+
+# Установка всех зависимостей
+RUN npm install
 
 # Копирование исходного кода
 COPY . .
@@ -41,7 +46,7 @@ COPY apps/api/package*.json ./apps/api/
 COPY packages/database/package*.json ./packages/database/
 
 # Установка только production зависимостей
-RUN npm ci --only=production
+RUN npm install --only=production --ignore-scripts
 
 # Копирование собранного приложения и Prisma клиента
 COPY --from=builder /app/apps/api/dist ./apps/api/dist

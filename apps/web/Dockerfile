@@ -11,12 +11,21 @@ ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
-# Установка зависимостей
+# Установка зависимостей для сборки
+RUN apk add --no-cache python3 make g++
+
+# Копирование всех package.json файлов
 COPY package*.json ./
 COPY apps/web/package*.json ./apps/web/
+COPY apps/api/package*.json ./apps/api/
+COPY apps/admin/package*.json ./apps/admin/
 COPY packages/database/package*.json ./packages/database/
 
-RUN npm ci
+# Генерация package-lock.json если его нет
+RUN if [ ! -f package-lock.json ]; then npm install --package-lock-only; fi
+
+# Установка всех зависимостей
+RUN npm install
 
 # Копирование исходного кода
 COPY . .

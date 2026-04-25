@@ -260,12 +260,15 @@ model WatchHistory {
 
 model Comment {
   id        String   @id @default(uuid())
-  content   String
+  content   String   @db.Text
   parentId  String?
-  animeId   String?
+  animeId   String
   userId    String
+  episodeId String?  // Опционально: комментарий к конкретному эпизоду
+  
   isEdited  Boolean  @default(false)
   isDeleted Boolean  @default(false)
+  isHidden  Boolean  @default(false)
   likes     Int      @default(0)
   dislikes  Int      @default(0)
   
@@ -273,16 +276,19 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   // Связи
-  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies    Comment[] @relation("CommentReplies")
-  anime      Anime?    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  anime      Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  episode    Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull)
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  likedBy    User[]    @relation("LikedComments")
-  dislikedBy User[]    @relation("DislikedComments")
+  
+  // Лайки/дизлайки
+  commentLikes CommentLike[]
 
   @@index([animeId])
   @@index([userId])
   @@index([parentId])
+  @@index([episodeId])
   @@index([createdAt])
   @@map("comments")
 }

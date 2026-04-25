@@ -1,42 +1,30 @@
-# ==========================================
-# .dockerignore корневой
-# ==========================================
+# Игнорируемые файлы для Docker
 node_modules
-dist
-.next
-.env
-.env.local
-*.log
+npm-debug.log
 .git
 .gitignore
-README.md
+.env
+.env.local
+.env.*.local
+*.md
+README*
+LICENSE
 .dockerignore
-Dockerfile
-docker-compose.yml
-docker-compose.override.yml
-
-# Тесты
-**/*.test.ts
-**/*.test.tsx
-**/*.spec.ts
-**/*.spec.tsx
-__tests__
-coverage
-
-# IDE
-.idea
+Dockerfile*
+docker-compose*
+init-db
 .vscode
+.idea
 *.swp
 *.swo
-
-# OS
+*~
 .DS_Store
 Thumbs.db
-
-# Документы
-docs
-*.md
-!package*.json
-
-# Скрипты разработки
-scripts/dev-*
+dist
+build
+.next
+out
+coverage
+.nyc_output
+*.log
+prisma/migrations

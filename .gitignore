@@ -1,16 +1,48 @@
 ```
 # Dependencies
 node_modules/
+.pnpm-store/
+.yarn/
+.yarn-cache/
 
-# Environment
-.env
-.env.local
-*.env.*
+# Build outputs
+dist/
+build/
+.next/
+.nuxt/
+public/dist/
+*.bundle.js
+*.min.js
 
-# Logs and temp files
-*.log
-*.tmp
+# TypeScript
+*.tsbuildinfo
+*.js.map
+*.ts.map
 
-# Editors
+# Prisma
+prisma/migrations/
+prisma/seed/
+*.db
+*.db-journal
+
+# Environment variables
+.env*
+!.env.example
+
+# IDE files
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+.nyc_output/
 ```

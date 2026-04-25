@@ -39,7 +39,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./animestream
       dockerfile: apps/api/Dockerfile
     container_name: animestream_api
     restart: unless-stopped
@@ -58,42 +58,6 @@ services:
       redis:
         condition: service_healthy
     command: sh -c "npx prisma migrate deploy && npm run start:prod"
-    networks:
-      - animestream_network
-
-  web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3001}
-    container_name: animestream_web
-    restart: unless-stopped
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3001}
-      NODE_ENV: production
-    ports:
-      - "${WEB_PORT:-3000}:3000"
-    depends_on:
-      - api
-    networks:
-      - animestream_network
-
-  admin:
-    build:
-      context: .
-      dockerfile: apps/admin/Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3001}
-    container_name: animestream_admin
-    restart: unless-stopped
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3001}
-      NODE_ENV: production
-    ports:
-      - "${ADMIN_PORT:-3002}:3002"
-    depends_on:
-      - api
     networks:
       - animestream_network
 

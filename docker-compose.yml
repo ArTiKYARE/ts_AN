@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -19,6 +17,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - animestream_network
 
   redis:
     image: redis:7-alpine
@@ -34,11 +34,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - animestream_network
 
   api:
     build:
       context: .
-      dockerfile: api/Dockerfile
+      dockerfile: apps/api/Dockerfile
     container_name: animestream_api
     restart: unless-stopped
     environment:
@@ -56,16 +58,15 @@ services:
       redis:
         condition: service_healthy
     command: sh -c "npx prisma migrate deploy && npm run start:prod"
-    volumes:
-      - ./api:/app
-      - /app/node_modules
+    networks:
+      - animestream_network
 
   web:
     build:
       context: .
-      dockerfile: web/Dockerfile
+      dockerfile: apps/web/Dockerfile
       args:
-        API_URL: http://localhost:${API_PORT:-3001}
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3001}
     container_name: animestream_web
     restart: unless-stopped
     environment:
@@ -75,13 +76,15 @@ services:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
       - api
+    networks:
+      - animestream_network
 
   admin:
     build:
       context: .
-      dockerfile: admin/Dockerfile
+      dockerfile: apps/admin/Dockerfile
       args:
-        API_URL: http://localhost:${API_PORT:-3001}
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3001}
     container_name: animestream_admin
     restart: unless-stopped
     environment:
@@ -91,11 +94,13 @@ services:
       - "${ADMIN_PORT:-3002}:3002"
     depends_on:
       - api
+    networks:
+      - animestream_network
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  default:
-    name: animestream_network
+  animestream_network:
+    driver: bridge

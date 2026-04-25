@@ -1,6 +1,3 @@
-// Схема базы данных для AnimeStream
-// Совместима с Prisma ORM 5.x и PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,10 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// ENUMS (Перечисления)
-// ============================================
-
+// Enums
 enum Role {
   USER
   MODERATOR
@@ -48,10 +42,7 @@ enum FavoriteStatus {
   PAUSED
 }
 
-// ============================================
-// ПОЛЬЗОВАТЕЛИ
-// ============================================
-
+// Models
 model User {
   id            String       @id @default(uuid())
   email         String       @unique
@@ -64,7 +55,6 @@ model User {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
-  // Связи
   settings      UserSettings?
   refreshTokens RefreshToken[]
   comments      Comment[]
@@ -107,10 +97,6 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-// ============================================
-// АНИМЕ КОНТЕНТ
-// ============================================
-
 model Anime {
   id             String       @id @default(uuid())
   title          String
@@ -135,7 +121,6 @@ model Anime {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  // Связи
   genres         Genre[]
   studios        Studio[]
   episodes       Episode[]
@@ -144,8 +129,8 @@ model Anime {
   watchHistory   WatchHistory[]
   synonyms       Synonym[]
   
-  relatedFrom    RelatedAnime[] @relation("relatedFrom")
-  relatedTo      RelatedAnime[] @relation("relatedTo")
+  relatedFrom    RelatedAnime[] @relation("AnimeRelatedFrom")
+  relatedTo      RelatedAnime[] @relation("AnimeRelatedTo")
 
   @@index([slug])
   @@index([title])
@@ -247,9 +232,9 @@ model Dub {
 model RelatedAnime {
   id           String @id @default(uuid())
   fromId       String
-  from         Anime  @relation("relatedFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  from         Anime  @relation("AnimeRelatedFrom", fields: [fromId], references: [id], onDelete: Cascade)
   toId         String
-  to           Anime  @relation("relatedTo", fields: [toId], references: [id], onDelete: Cascade)
+  to           Anime  @relation("AnimeRelatedTo", fields: [toId], references: [id], onDelete: Cascade)
   relationType String
 
   @@unique([fromId, toId])
@@ -257,10 +242,6 @@ model RelatedAnime {
   @@index([toId])
   @@map("related_anime")
 }
-
-// ============================================
-// ПОЛЬЗОВАТЕЛЬСКАЯ АКТИВНОСТЬ
-// ============================================
 
 model Favorite {
   id        String        @id @default(uuid())
@@ -305,12 +286,10 @@ model Comment {
   animeId   String
   anime     Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
   episodeId String?
-  // Связь с эпизодом опциональна, если есть episodeId, то episode должен существовать
   episode   Episode?  @relation(fields: [episodeId], references: [id], onDelete: SetNull)
   
   content   String    @db.Text
   
-  // Самоссылающаяся связь для ответов
   parentId  String?
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
@@ -325,7 +304,6 @@ model Comment {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  // Лайки к комментарию
   likesRelations CommentLike[]
 
   @@index([userId])
@@ -343,17 +321,13 @@ model CommentLike {
   commentId String
   comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
   
-  type      String   // "like" или "dislike"
+  type      String
   createdAt DateTime @default(now())
 
   @@unique([userId, commentId])
   @@index([commentId])
   @@map("comment_likes")
 }
-
-// ============================================
-// АДМИН И СИСТЕМА
-// ============================================
 
 model AdminLog {
   id        String   @id @default(uuid())
